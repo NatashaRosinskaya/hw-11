@@ -3,19 +3,39 @@ class Contacts{
         this.data = [];
     }
 
-    add(data){
-        let user = new User (data)
-        this.data.push (user);
-    }
-    edit(id, obj) {
-        let user = this.data.find(function(item) {
-          return item.get().id === id
+    add(data) {
+        if (data.id == undefined) data.id = 0;
+
+        let user = new User(data);
+
+        let maxId = 0;
+        this.data.forEach(user => {
+            if (user.data.id != undefined) {
+                if (maxId == undefined) maxId = +user.data.id;
+                else if (maxId < +user.data.id) maxId = +user.data.id;
+            }
         });
-        user.edit(obj);
+
+        maxId++;
+
+        user.edit({id: maxId});
+
+        this.data.push(user);
     }
+    edit(id, data) {
+        let user = this.data.filter(user => {
+            return +user.data.id == +id;
+        });
+
+        if (user.length == 0) return;
+
+        user = user[0];
+        user.edit(data);
+    }
+    
     remove(id) {
-        this.data = this.data.filter(function(item) {
-            return item.get().id !== id
+        this.data = this.data.filter(user => {
+            return +user.data.id != +id;
         });
     }
     get(){
@@ -41,7 +61,7 @@ class User{
 
 let contactBooks = new Contacts ()
 
-contactBooks.add({
+/*contactBooks.add({
     id: 1,
     name: 'Maria',
     email: 'mari@gmail.com',
@@ -77,7 +97,7 @@ contactBooks.edit(4, {name: 'Alexandr'})
 
 contactBooks.remove(2)
 console.log(contactBooks)
-
+*/
 class ContactsApp extends Contacts{
     constructor (){
         super();
@@ -85,74 +105,193 @@ class ContactsApp extends Contacts{
         this.init();
     }
 
-    init(){
-        let contactContainer = document.createElement('div')
-        contactContainer.classList.add('container')
-        document.body.appendChild(contactContainer)
+    init() {
+        let contactsElem = document.createElement('div');
+        contactsElem.classList.add('contacts');
 
-        let contactForm = document.createElement('div');
-        contactForm.classList.add ('contact__form');
-        contactContainer.appendChild(contactForm);
+        let contactTitle = document.createElement('h2')
+        contactTitle.classList.add('title_contact')
+        contactTitle.innerHTML="Книга контактов"
+
+        let contactsForm = document.createElement('div');
+        contactsForm.classList.add('contacts__form');
 
         this.contactsList = document.createElement('div');
-        this.contactsList.classList.add ('contact__list');
-        contactContainer.appendChild(this.contactsList);
+        this.contactsList.classList.add('contacts__list');
 
-        let contactTextarea = document.createElement('textarea');
-        contactTextarea.setAttribute ('name', 'contact_add');
-        contactForm.appendChild(contactTextarea);
+        this.contactId = document.createElement('input');
+        this.contactId.setAttribute('type', 'text'); 
+        this.contactId.setAttribute('name', 'contact_id');
+        this.contactId.setAttribute('placeholder', '№');
 
-        /*let contactButton = document.createElement('button');
-        contactButton.setAttribute('id', 'btn_send');
-        contactForm.appendChild(contactButton);
-        contactButton.innerHTML='Добавить контакт';
+        this.contactName = document.createElement('input');
+        this.contactName.setAttribute('type', 'text'); 
+        this.contactName.setAttribute('name', 'contact_name');
+        this.contactName.setAttribute('placeholder', 'Имя');
 
-          let buttonSend = document.querySelector('#btn_send')
-            buttonSend.addEventListener('click', event=>{
-                    this.sendBtn(event)    
-                                 
-            }) */
-       
-        contactTextarea.addEventListener('keyup', event => {
+        this.contactEmail = document.createElement('input');
+        this.contactEmail.setAttribute('type', 'email'); 
+        this.contactEmail.setAttribute('name', 'contact_email');
+        this.contactEmail.setAttribute('placeholder', 'Email');
+
+        this.contactAddress = document.createElement('input');
+        this.contactAddress.setAttribute('type', 'text'); 
+        this.contactAddress.setAttribute('name', 'contact_address');
+        this.contactAddress.setAttribute('placeholder', 'Адрес');
+
+        this.contactPhone = document.createElement('input');
+        this.contactPhone.setAttribute('type', 'tel'); 
+        this.contactPhone.setAttribute('name', 'contact_phone');
+        this.contactPhone.setAttribute('placeholder', 'Телефон');
+
+        let contactsBtnAdd = document.createElement('button');
+        contactsBtnAdd.innerHTML = 'Сохранить контакт'
+
+        contactsElem.appendChild(contactsForm);
+        contactsForm.appendChild(contactTitle)
+        contactsForm.appendChild(this.contactId)
+        contactsForm.appendChild(this.contactName);
+        contactsForm.appendChild(this.contactEmail);
+        contactsForm.appendChild(this.contactAddress);
+        contactsForm.appendChild(this.contactPhone);
+        contactsForm.appendChild(contactsBtnAdd);
+        contactsElem.appendChild(this.contactsList);
+        document.body.appendChild(contactsElem);
+
+        this.contactName.addEventListener('keyup', event => {
             this.onAdd(event);
-    })
-}   
-    updateContact(){
-        this.contactsList.innerHTML = '';
-        this.data.forEach(user => {
-            let contactElem = document.createElement('div');
-            contactElem.classList.add('contacts__item')
-            contactElem.dataset.id = user.data.id;
-            contactElem.innerHTML = user.data.contactBooks;
-            this.contactsList.appendChild(contactElem)
-        })
+        });
+
+        this.contactEmail.addEventListener('keyup', event => {
+            this.onAdd(event);
+        });
+
+        this.contactAddress.addEventListener('keyup', event => {
+            this.onAdd(event);
+        });
+
+        this.contactPhone.addEventListener('keyup', event => {
+            this.onAdd(event);
+        });
+
+
+        contactsBtnAdd.addEventListener('click', event =>{
+            this.onAdd(event);
+        });
     }
 
+    updateList() {
+        this.contactsList.innerHTML = '';
 
-        onAdd(event){
-        if (event.ctrlKey != true || event.key !="Enter") return;
-        if (event.target.value.length == 0) return
+        this.data.forEach((user, index) => {
+            let contactsElem = document.createElement('div');
+            contactsElem.classList.add('contacts__item');
+            contactsElem.dataset.id = user.data.id
 
-        this.add({
-        contactBooks: event.target.value
-        })
-   
-        this.updateContact()
-        event.target.value =''
+            let contactId = document.createElement('div');
+            contactId.innerHTML = user.data.id;
+
+            let contactH3 = document.createElement('h3');
+            contactH3.innerHTML = user.data.name || '';
+                     
+            let contactP1 = document.createElement('div');
+            contactP1.innerHTML = user.data.email;
+
+            let contactP2 = document.createElement('div');
+            contactP2.innerHTML = user.data.address;
+
+            let contactP3 = document.createElement('div');
+            contactP3.innerHTML = user.data.phone;
+
+            this.contactsList.appendChild(contactsElem);
+            const contactRemove = document.createElement('button');
+            contactRemove.id = index;
+            contactRemove.innerHTML = 'Удалить';
+            contactsElem.appendChild(contactRemove);
+            contactRemove.classList.add('contacts__btn');
+
+            const contactEdit = document.createElement('button');
+            contactEdit.id = index;
+            contactEdit.innerHTML = 'Редактировать';
+            contactsElem.appendChild(contactEdit);
+            contactEdit.classList.add('contacts__btn');
+
+            contactsElem.appendChild(contactH3);
+            contactsElem.appendChild(contactId);           
+            contactsElem.appendChild(contactP1);
+            contactsElem.appendChild(contactP2);
+            contactsElem.appendChild(contactP3);
+            contactsElem.appendChild(contactEdit);
+            contactsElem.appendChild(contactRemove);
+            this.contactsList.appendChild(contactsElem);
+            
+            contactRemove.addEventListener('click', event =>{
+                this.onRemove(event);
+            });
+
+            contactEdit.addEventListener('click', event =>{
+                this.onEdit(event);
+            });
+        });
+    }
+
+    onAdd(event) {
+
+        if (event.type == 'keyup' && (event.ctrlKey != true || event.key != 'Enter')) return;
+        if (this.contactId.value.length == 0) return;
+
+
+        let data = {
+            id: this.contactId.value,
+            name: this.contactName.value,
+            email: this.contactEmail.value,
+            address: this.contactAddress.value,
+            phone: this.contactPhone.value,
+        }
+        if (this.contactId.dataset.action === 'edit' && this.contactId.dataset.id) {
+            this.edit(this.contactId.dataset.id, data);
+            this.contactId.dataset.action = '';
+            this.contactId.dataset.id = '';
+        } else {
+            this.add(data);
         }
 
-        onEdit(event){
+        this.updateList();
+        this.contactId.value = '';
+        this.contactName.value = '';
+        this.contactEmail.value = ''; 
+        this.contactAddress.value = ''; 
+        this.contactPhone.value = '';        
+    }
 
-        }
-    /*sendBtn(event){
+    onRemove(event) {
+        let parent = event.target.closest('.contacts__item');
+        let id = parent.dataset.id;
+        if (!id) return;
+        this.remove(id);
+        this.updateList();
+    }
 
-    this.add({
-        contactsBook: event.target.value
-    })
-   
-    this.updateContact()
-    event.target.value =''
-}*/
+    onEdit(event){
+        const parent = event.target.closest('.contacts__item')
+        const id = parent.dataset.id;
+
+        if (!id) return;
+
+        let contact = this.data.find(contact =>{
+            return contact.data.id == id;
+        });
+
+        this.contactId.value = contact.data.id;
+        this.contactName.value = contact.data.name;
+        this.contactEmail.value = contact.data.email;
+        this.contactAddress.value = contact.data.address;
+        this.contactPhone.value = contact.data.phone;
+
+        this.contactId.dataset.action = 'edit';
+        this.contactId.dataset.id = id;    
+    }
+
 }
 
 new ContactsApp()
